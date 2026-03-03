@@ -116,7 +116,7 @@
         // ======================================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbxuzyU-jcrktqxse96JksxyJLxbDlnvQdOanEj1hQRp70oqt3woI8sSeivDx9y7fVQk/exec";
 
-        let html5QrCode;
+        let html5QrCode = null; // Variable global para la cámara
         const statusDiv = document.getElementById('statusMsg');
         const btnEnviar = document.getElementById('btnEnviar');
         const inputQR = document.getElementById('qrData');
@@ -124,7 +124,7 @@
         const inputUnidad = document.getElementById('unidad');
         const inputQty = document.getElementById('quantity');
 
-        // Wrapper universal para Fetch (POST)
+        // Wrapper para Fetch API
         async function apiCall(action, params = {}) {
             try {
                 const response = await fetch(API_URL, {
@@ -137,7 +137,7 @@
             }
         }
 
-        // Función auxiliar para mostrar mensajes
+        // Función para mostrar alertas de colores
         function showStatus(msg, isError = false) {
             statusDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-emerald-100', 'text-emerald-700', 'bg-blue-100', 'text-blue-700');
             statusDiv.classList.add('block');
@@ -147,50 +147,70 @@
             } else if (isError === false) {
                 statusDiv.classList.add('bg-emerald-100', 'text-emerald-700');
             } else {
-                statusDiv.classList.add('bg-blue-100', 'text-blue-700'); // Info
+                statusDiv.classList.add('bg-blue-100', 'text-blue-700'); 
             }
             statusDiv.innerText = msg;
         }
 
-        // ================= MOTOR DE CÁMARA =================
+        // ================= MOTOR DE CÁMARA (CORREGIDO PARA CICLO INFINITO) =================
         function startScanner() {
-            if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(e=>e); }
-            
+            // Vuelve a hacer visible el cuadro de la cámara
+            document.getElementById('reader').style.display = "block";
+
+            // Si no existe la cámara, la crea una sola vez
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            // Evita iniciarla dos veces al mismo tiempo
+            if (html5QrCode.isScanning) return;
+
             const config = { fps: 10, qrbox: { width: 220, height: 220 } };
-            html5QrCode = new Html5Qrcode("reader");
             
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .catch(err => {
-                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+                html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
+                .catch(e => console.log("Cámara no disponible"));
             });
         }
 
         // ================= AL ESCANEAR EL CÓDIGO QR =================
         async function onScanSuccess(decodedText) {
-            html5QrCode.stop().catch(e=>e); // Detiene cámara
-            document.getElementById('reader').innerHTML = "<div class='p-10 text-center text-slate-500 font-bold'>Buscando producto...</div>";
+            // 1. Pausa y oculta la cámara de forma segura
+            try {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    await html5QrCode.stop();
+                }
+            } catch(e) { console.error(e); }
+            document.getElementById('reader').style.display = "none"; // Oculta visualmente sin destruir
             
+            // 2. Prepara los campos
             inputQR.value = decodedText;
             inputName.value = "Buscando...";
             inputUnidad.value = "-";
             showStatus("Consultando base de datos...", null);
 
+            // 3. Consulta la Base de Datos
             const result = await apiCall('getProductName', { qrCode: decodedText });
 
             if (result.error) {
                 showStatus(result.error, true);
                 inputName.value = "No encontrado";
                 inputUnidad.value = "";
-                // Reactivamos el botón limpiar para que puedan escanear de nuevo
-                setTimeout(() => startScanner(), 2500);
+                
+                // Si falla, reactiva la cámara en 2.5 segundos
+                setTimeout(() => {
+                    statusDiv.classList.add('hidden');
+                    startScanner();
+                }, 2500);
             } else {
-                statusDiv.classList.add('hidden'); // Ocultar si fue éxito
+                statusDiv.classList.add('hidden'); 
                 inputName.value = result.nombre;
                 inputUnidad.value = result.unidad;
                 
-                inputQty.disabled = false; // Habilitar cantidad
-                btnEnviar.disabled = false; // Habilitar botón enviar
-                inputQty.focus();
+                inputQty.disabled = false; 
+                btnEnviar.disabled = false; 
+                inputQty.focus(); // Coloca el cursor en la cantidad
             }
         }
 
@@ -203,7 +223,6 @@
                 return;
             }
 
-            // Bloquear botón para evitar doble clic
             btnEnviar.disabled = true;
             btnEnviar.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">autorenew</span> GUARDANDO...';
             showStatus("Registrando en el sistema...", null);
@@ -218,7 +237,6 @@
 
             const result = await apiCall('processForm', { formData: formData });
 
-            // 🔴 Reactivamos el botón SIEMPRE para no bloquear el flujo
             btnEnviar.disabled = false;
             btnEnviar.innerHTML = '<span class="material-symbols-outlined mr-2">save</span> ENVIAR REGISTRO';
 
@@ -227,14 +245,15 @@
             } else {
                 showStatus(result.success, false);
                 
-                // Limpiamos campos para el siguiente registro (conservando el folio)
+                // Limpia todo EXCEPTO el folio
                 inputQR.value = "";
                 inputName.value = "";
                 inputUnidad.value = "";
                 inputQty.value = "";
                 inputQty.disabled = true; 
+                btnEnviar.disabled = true;
                 
-                // Reiniciar cámara automáticamente tras 2 segundos
+                // Reinicia la cámara automáticamente para el siguiente producto
                 setTimeout(() => {
                     statusDiv.classList.add('hidden');
                     startScanner();
@@ -242,7 +261,7 @@
             }
         });
 
-        // Botón de Escanear de nuevo manualmente
+        // ================= BOTONES EXTRAS =================
         function reiniciarEscaneo() {
             inputQR.value = "";
             inputName.value = "";
@@ -254,12 +273,11 @@
             startScanner();
         }
 
-        // Botón de Cerrar Sesión
         function cerrarSesion() {
             window.top.location.href = 'https://hdmordendeservicios-cloud.github.io/HDMAPI/';
         }
 
-        // Arrancar cámara al cargar la página
+        // Arranca la cámara la primera vez que se abre la página
         window.onload = startScanner;
     </script>
 </body>

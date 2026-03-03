@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Registro QR - HDM</title>
+    <title>Registro QR - HDM México</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -18,6 +18,7 @@
                         primary: "#005B9A", 
                         "primary-dark": "#004575",
                         "surface": "#FFFFFF",
+                        "background": "#F8FAFC",
                         "text-main": "#1E293B",
                         "text-sub": "#64748B",
                     },
@@ -39,7 +40,7 @@
             
             <div class="flex flex-col items-center mb-6 text-center">
                 <img src="https://i.ibb.co/rCsz6hh/LOGOTIPO.png" alt="Logo HDM" class="mb-4 object-contain h-20"> 
-                <h1 class="text-2xl font-extrabold text-[#1E293B] tracking-tight">Registro del producto por QR</h1>
+                <h1 class="text-xl font-extrabold text-[#1E293B] tracking-tight">Registro del producto por QR</h1>
                 <p class="text-xs font-medium text-[#64748B] mt-1">Sistemas de Filtración de Agua SA. de C.V.</p>
             </div>
 
@@ -56,18 +57,18 @@
                 
                 <div>
                     <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Folio:</label>
-                    <input type="text" id="ticket" required class="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary uppercase font-bold text-primary" placeholder="Ingrese el Folio">
+                    <input type="text" id="ticket" required class="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary uppercase font-bold text-primary placeholder-slate-400" placeholder="Ej. HDM-0080">
                 </div>
 
                 <div>
-                    <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Código del producto:</label>
-                    <input type="text" id="qrData" required readonly class="w-full mt-1 px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-sm font-mono text-slate-600 focus:outline-none cursor-not-allowed" placeholder="Esperando escaneo...">
+                    <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Nombre del producto:</label>
+                    <input type="text" id="productName" required readonly class="w-full mt-1 px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none cursor-not-allowed" placeholder="---">
                 </div>
 
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-2">
-                        <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Nombre:</label>
-                        <input type="text" id="productName" required readonly class="w-full mt-1 px-3 py-3 bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none cursor-not-allowed" placeholder="---">
+                        <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Código:</label>
+                        <input type="text" id="qrData" required readonly class="w-full mt-1 px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg text-sm font-mono text-slate-600 focus:outline-none cursor-not-allowed" placeholder="Esperando escaneo...">
                     </div>
                     <div class="col-span-1">
                         <label class="text-[12px] font-bold text-slate-700 ml-0.5 uppercase tracking-wide">Unidad:</label>
@@ -83,7 +84,7 @@
                     </div>
                 </div>
 
-                <div id="statusMsg" class="hidden py-3 px-4 rounded-lg text-sm font-semibold text-center mt-2"></div>
+                <div id="statusMsg" class="hidden py-3 px-4 rounded-lg text-sm font-semibold text-center mt-2 animate-fade-in"></div>
 
                 <div class="pt-4 space-y-3">
                     <button type="submit" id="btnEnviar" disabled class="w-full py-3.5 bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-wider">
@@ -123,7 +124,7 @@
         const inputUnidad = document.getElementById('unidad');
         const inputQty = document.getElementById('quantity');
 
-        // Wrapper para Fetch
+        // Wrapper universal para Fetch (POST)
         async function apiCall(action, params = {}) {
             try {
                 const response = await fetch(API_URL, {
@@ -132,11 +133,11 @@
                 });
                 return await response.json();
             } catch (error) {
-                return { error: "Error de conexión." };
+                return { error: "Error de conexión con el servidor." };
             }
         }
 
-        // Función para mostrar mensajes
+        // Función auxiliar para mostrar mensajes
         function showStatus(msg, isError = false) {
             statusDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-emerald-100', 'text-emerald-700', 'bg-blue-100', 'text-blue-700');
             statusDiv.classList.add('block');
@@ -146,13 +147,12 @@
             } else if (isError === false) {
                 statusDiv.classList.add('bg-emerald-100', 'text-emerald-700');
             } else {
-                // Info (Azul)
-                statusDiv.classList.add('bg-blue-100', 'text-blue-700');
+                statusDiv.classList.add('bg-blue-100', 'text-blue-700'); // Info
             }
             statusDiv.innerText = msg;
         }
 
-        // ================= INICIAR CÁMARA =================
+        // ================= MOTOR DE CÁMARA =================
         function startScanner() {
             if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(e=>e); }
             
@@ -165,7 +165,7 @@
             });
         }
 
-        // ================= AL ESCANEAR EL CÓDIGO =================
+        // ================= AL ESCANEAR EL CÓDIGO QR =================
         async function onScanSuccess(decodedText) {
             html5QrCode.stop().catch(e=>e); // Detiene cámara
             document.getElementById('reader').innerHTML = "<div class='p-10 text-center text-slate-500 font-bold'>Buscando producto...</div>";
@@ -181,6 +181,8 @@
                 showStatus(result.error, true);
                 inputName.value = "No encontrado";
                 inputUnidad.value = "";
+                // Reactivamos el botón limpiar para que puedan escanear de nuevo
+                setTimeout(() => startScanner(), 2500);
             } else {
                 statusDiv.classList.add('hidden'); // Ocultar si fue éxito
                 inputName.value = result.nombre;
@@ -192,16 +194,22 @@
             }
         }
 
-        // ================= AL ENVIAR FORMULARIO =================
+        // ================= AL ENVIAR EL FORMULARIO =================
         document.getElementById('qrForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (!inputQR.value || !inputQty.value || document.getElementById('ticket').value.trim() === "") {
+                showStatus('Faltan datos obligatorios.', true);
+                return;
+            }
+
+            // Bloquear botón para evitar doble clic
             btnEnviar.disabled = true;
             btnEnviar.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">autorenew</span> GUARDANDO...';
             showStatus("Registrando en el sistema...", null);
 
             const formData = {
-                ticket: document.getElementById('ticket').value,
+                ticket: document.getElementById('ticket').value.trim(),
                 qrData: inputQR.value,
                 productName: inputName.value,
                 unidad: inputUnidad.value,
@@ -210,22 +218,23 @@
 
             const result = await apiCall('processForm', { formData: formData });
 
+            // 🔴 Reactivamos el botón SIEMPRE para no bloquear el flujo
+            btnEnviar.disabled = false;
+            btnEnviar.innerHTML = '<span class="material-symbols-outlined mr-2">save</span> ENVIAR REGISTRO';
+
             if (result.error) {
                 showStatus(result.error, true);
-                btnEnviar.disabled = false;
-                btnEnviar.innerHTML = '<span class="material-symbols-outlined mr-2">save</span> ENVIAR REGISTRO';
             } else {
                 showStatus(result.success, false);
                 
-                // Limpiar campos para el siguiente
+                // Limpiamos campos para el siguiente registro (conservando el folio)
                 inputQR.value = "";
                 inputName.value = "";
                 inputUnidad.value = "";
                 inputQty.value = "";
-                inputQty.disabled = true;
-                btnEnviar.innerHTML = '<span class="material-symbols-outlined mr-2">save</span> ENVIAR REGISTRO';
+                inputQty.disabled = true; 
                 
-                // Reiniciar cámara a los 2 segundos
+                // Reiniciar cámara automáticamente tras 2 segundos
                 setTimeout(() => {
                     statusDiv.classList.add('hidden');
                     startScanner();
@@ -233,7 +242,7 @@
             }
         });
 
-        // Botón de Escanear de nuevo
+        // Botón de Escanear de nuevo manualmente
         function reiniciarEscaneo() {
             inputQR.value = "";
             inputName.value = "";

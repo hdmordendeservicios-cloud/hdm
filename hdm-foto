@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SMEINC - Captura de Evidencia</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #121212; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: var(--bg); 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        header { 
+            background: var(--primary); 
+            padding: 15px; 
+            font-weight: bold; 
+            font-size: 1.2rem; 
+            text-align: center; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5); 
+        }
+        #video-container { 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: black; 
+        }
+        video { width: 100%; height: auto; max-height: 100%; }
+        .footer { 
+            padding: 20px; 
+            background: #1e1e1e; 
+            border-top: 1px solid #333; 
+        }
+        #snap { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 50px; 
+            font-size: 1.1rem; 
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.4); 
+            cursor: pointer;
+        }
+        #snap:active { transform: scale(0.95); background: #1557b0; }
+        #status { 
+            margin-top: 15px; 
+            font-size: 0.9rem; 
+            color: #aaa; 
+            text-align: center; 
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <header>SMEINC - CÁMARA</header>
+    
+    <div id="video-container">
+        <video id="video" autoplay playsinline muted></video>
+    </div>
+
+    <div class="footer">
+        <button id="snap">📸 CAPTURAR EVIDENCIA</button>
+        <div id="status">Iniciando cámara trasera...</div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const snapBtn = document.getElementById('snap');
+
+        // URL DE TU WEB APP DE GOOGLE (La que obtuviste al "Implementar")
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjcHaVRTlan_LJcBg5vMPzWG2quKnIDlabWtSjrHgn0LLuW7HbecTTqHE8EG9bwBRu/exec";
+
+        // Iniciar cámara trasera para técnicos
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" }, 
+            audio: false 
+        })
+        .then(stream => { 
+            video.srcObject = stream; 
+            status.innerText = "Listo para capturar.";
+        })
+        .catch(err => { 
+            status.innerText = "Error: Por favor permite el acceso a la cámara.";
+            console.error(err);
+        });
+
+        snapBtn.addEventListener('click', async () => {
+            if (WEB_APP_URL === "https://script.google.com/macros/s/AKfycbxjcHaVRTlan_LJcBg5vMPzWG2quKnIDlabWtSjrHgn0LLuW7HbecTTqHE8EG9bwBRu/exec") {
+                alert("Debes configurar la URL de tu Web App de Google en el código.");
+                return;
+            }
+
+            snapBtn.disabled = true;
+            status.innerText = "Procesando imagen...";
+            
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            status.innerText = "Enviando a la hoja qaa...";
+
+            try {
+                // Enviamos los datos a la Web App de Google mediante una petición POST
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Necesario para evitar bloqueos de seguridad básicos
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagen: dataUrl })
+                });
+
+                status.innerText = "✅ ¡Foto enviada correctamente!";
+                
+                // Feedback visual de éxito
+                document.body.style.backgroundColor = "#06402b";
+                setTimeout(() => {
+                    document.body.style.backgroundColor = "#121212";
+                    status.innerText = "Listo para otra captura.";
+                    snapBtn.disabled = false;
+                }, 2000);
+
+            } catch (err) {
+                status.innerText = "❌ Error al enviar: " + err;
+                snapBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

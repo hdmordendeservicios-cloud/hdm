@@ -96,11 +96,10 @@
             console.error(err);
         });
 
-        snapBtn.addEventListener('click', async () => {
-            if (WEB_APP_URL === "https://script.google.com/macros/s/AKfycbxjcHaVRTlan_LJcBg5vMPzWG2quKnIDlabWtSjrHgn0LLuW7HbecTTqHE8EG9bwBRu/exec") {
-                alert("Debes configurar la URL de tu Web App de Google en el código.");
-                return;
-            }
+snapBtn.addEventListener('click', async () => {
+    snapBtn.disabled = true;
+    status.innerText = "Procesando imagen...";
+    // ... resto del código
 
             snapBtn.disabled = true;
             status.innerText = "Procesando imagen...";

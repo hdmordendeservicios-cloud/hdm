@@ -1,141 +1,246 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMEINC - Captura de Evidencia</title>
+    <title>HDM Portal</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #1a73e8; --bg: #121212; }
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background: var(--bg); 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            overflow: hidden;
-        }
-        header { 
-            background: var(--primary); 
-            padding: 15px; 
-            font-weight: bold; 
-            font-size: 1.2rem; 
-            text-align: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5); 
-        }
-        #video-container { 
-            flex: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            background: black; 
-        }
-        video { width: 100%; height: auto; max-height: 100%; }
-        .footer { 
-            padding: 20px; 
-            background: #1e1e1e; 
-            border-top: 1px solid #333; 
-        }
-        #snap { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            width: 100%; 
-            border-radius: 50px; 
-            font-size: 1.1rem; 
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.4); 
-            cursor: pointer;
-        }
-        #snap:active { transform: scale(0.95); background: #1557b0; }
-        #status { 
-            margin-top: 15px; 
-            font-size: 0.9rem; 
-            color: #aaa; 
-            text-align: center; 
-            min-height: 1.2em;
-        }
+      :root { --navy: #103A82; --danger: #b91c1c; --bg: #f0f0f0; --grey: #555; }
+      body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; }
+      
+      .container { 
+        background-color: #ffffff; width: 100%; max-width: 500px; 
+        min-height: 100vh; display: flex; flex-direction: column; 
+        box-shadow: 0 0 15px rgba(0,0,0,0.1); 
+      }
+
+      .top-bar { background-color: var(--navy); height: 24px; }
+      .bottom-bar { 
+        background-color: var(--navy); height: 39px; 
+        margin-top: auto; display: flex; align-items: center; justify-content: center; 
+      }
+      .copyright { color: white; font-size: 11.5px; font-weight: bold; }
+
+      .header { text-align: center; padding: 15px 0; }
+      .company-name { color: var(--grey); font-size: 0.85em; font-weight: 600; margin-top: 5px; }
+      .title-hdm { text-align: center; color: var(--navy); font-size: 1.3em; margin: 15px 0; font-weight: bold; }
+      
+      .content { padding: 0 25px; }
+      label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+      input, select { 
+        width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; 
+        border-radius: 8px; font-size: 16px; box-sizing: border-box; 
+      }
+      
+      .btn-primary { 
+        width: 100%; padding: 16px; color: white; border: none; 
+        border-radius: 8px; font-size: 16px; font-weight: bold; 
+        background: var(--navy); cursor: pointer; margin-bottom: 10px; 
+      }
+      .btn-evaluar { 
+        width: 100%; padding: 16px; color: white; border: none; 
+        border-radius: 8px; font-size: 16px; font-weight: bold; 
+        background: var(--danger); cursor: pointer; margin-bottom: 10px;
+      }
+
+      .checkbox-container { display: flex; align-items: center; margin-bottom: 20px; font-size: 14px; }
+      .checkbox-container input { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; }
+
+      .error-msg { color: var(--danger); font-weight: bold; font-size: 14px; text-align: center; margin-top: 10px; display: block; }
+
+      #employeeDetails, #branchDetails { 
+        padding: 12px; margin-bottom: 15px; border-radius: 8px; 
+        background-color: #f0f4f8; border-left: 5px solid var(--navy); 
+      }
+      #employeeDetails p, #branchDetails p { margin: 4px 0; color: #333; font-weight: bold; font-size: 13px; }
+
+      #reader { width: 100%; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 15px; }
+      #mainMenu { display: none; }
+
+      #modalFolios { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; }
+      .modal-box { background:#fff; margin:20px; padding:15px; border-radius:10px; max-height:80vh; overflow-y:auto; }
+      table { width:100%; border-collapse:collapse; font-size:10px; }
+      th, td { border:1px solid #ddd; padding:6px; text-align:left; }
+      th { background:var(--navy); color:#fff; }
     </style>
-</head>
-<body>
-    <header>SMEINC - CÁMARA</header>
-    
-    <div id="video-container">
-        <video id="video" autoplay playsinline muted></video>
+  </head>
+  <body>
+    <div class="container">
+      <div class="top-bar"></div>
+      
+      <div class="header">
+        <img src="https://i.ibb.co/PGGg2Xsv/LOGOTIPO.png" style="width:160px;">
+        <p class="company-name">Sistemas de Filtración de Agua SA. de C.V.</p>
+      </div>
+
+      <div id="loginSection" class="content">
+        <div class="title-hdm">Portal de Órdenes de Servicio</div>
+        <label>No. de Empleado:</label>
+        <input type="text" id="userInput">
+        <label>Contraseña:</label>
+        <input type="password" id="passInput">
+        
+        <div class="checkbox-container">
+          <input type="checkbox" id="shwPass" onclick="document.getElementById('passInput').type=this.checked?'text':'password'">
+          <label for="shwPass" style="font-weight:normal; cursor:pointer;">Mostrar Contraseña</label>
+        </div>
+
+        <button type="button" id="loginBtn" class="btn-primary">INICIAR SESIÓN</button>
+        <button type="button" class="btn-primary" onclick="openFolios()">FOLIOS</button>
+        <button type="button" class="btn-evaluar" onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbw7Qh7UbMfHqkFTR6L7apF5StJ1bR-UjSQnyiuaQtXIp0wZG8T1fS8HSECfr7BG6Ovz/exec'">EVALUAR TRABAJO</button>
+        
+        <div id="loginError"></div>
+      </div>
+
+      <div id="mainMenu" class="content">
+        <div id="employeeDetails">
+          <p>USUARIO: <span id="resName"></span></p>
+          <p>CARGO: <span id="resPos"></span></p>
+        </div>
+
+        <div id="branchDetails" style="border-left-color:#16a34a; background:#f0fdf4;">
+          <p style="color:#16a34a">SUCURSAL DETECTADA:</p>
+          <p id="resBranch">---</p>
+        </div>
+
+        <div style="text-align:center; font-weight:bold; color:var(--navy); margin-bottom:5px;">FOLIO GENERADO:</div>
+        <div style="background:#e3f2fd; border:2px solid var(--navy); border-radius:10px; padding:10px; text-align:center; font-size:30px; font-weight:bold; color:var(--navy); margin-bottom:15px;">
+          <span id="folioDisp">---</span>
+        </div>
+
+        <div id="reader"></div>
+
+        <label>Seleccione Servicio:</label>
+        <select id="optionSelect">
+          <option value="">-- SELECCIONAR --</option>
+          <option value="ServicioCorrectivo">Orden de Servicio Correctivo</option>
+          <option value="ServicioInstalaciones">Orden de Servicio Instalaciones</option>
+          <option value="ServicioMantenimiento">Orden de Servicio Mantenimiento</option>
+          <option value="ServicioReporteVisita">Orden de Servicio Reporte de Visita</option>
+          <option value="RegistroQR">Registro del producto por QR</option>
+        </select>
+        <button type="button" id="submitBtn" class="btn-primary" disabled style="opacity:0.5;">CONTINUAR</button>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="copyright">Copyright 2026 &nbsp;&nbsp; Derechos HDM</div>
+      </div>
     </div>
 
-    <div class="footer">
-        <button id="snap">📸 CAPTURAR EVIDENCIA</button>
-        <div id="status">Iniciando cámara trasera...</div>
+    <div id="modalFolios">
+      <div class="modal-box">
+        <h4 style="margin-top:0; color:var(--navy);">Historial (Ayer y Hoy)</h4>
+        <div id="tableContent">Cargando datos...</div>
+        <button onclick="document.getElementById('modalFolios').style.display='none'" style="margin-top:15px; padding:10px; background:var(--danger); color:white; border:none; border-radius:5px; width:100%; font-weight:bold;">CERRAR</button>
+      </div>
     </div>
-
-    <canvas id="canvas" style="display:none;"></canvas>
 
     <script>
-        const video = document.getElementById('video');
-        const status = document.getElementById('status');
-        const snapBtn = document.getElementById('snap');
+      // ---------------------------------------------------------------------------------
+      // PEGA AQUÍ LA URL "EJECUTABLE" DE TU GOOGLE APPS SCRIPT
+      // Debe terminar en /exec
+      // ---------------------------------------------------------------------------------
+      const API_URL = "https://script.google.com/macros/s/AKfycbzY5Sny_P5UF-vR4Nx3Q9YPiMVHAT66qzERqwVNWaIhHOUgG66Q6CoD_PoQ2WlM77a2/exec"; 
 
-        // URL DE TU WEB APP DE GOOGLE (La que obtuviste al "Implementar")
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjcHaVRTlan_LJcBg5vMPzWG2quKnIDlabWtSjrHgn0LLuW7HbecTTqHE8EG9bwBRu/exec";
+      // Función puente para comunicar GitHub con Google Sheets
+      async function apiCall(action, params = {}) {
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Evita bloqueos CORS
+            body: JSON.stringify({ action: action, ...params })
+          });
+          return await response.json();
+        } catch (error) {
+          console.error("Error conectando con la base de datos:", error);
+          return { status: 'error' };
+        }
+      }
 
-        // Iniciar cámara trasera para técnicos
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "environment" }, 
-            audio: false 
-        })
-        .then(stream => { 
-            video.srcObject = stream; 
-            status.innerText = "Listo para capturar.";
-        })
-        .catch(err => { 
-            status.innerText = "Error: Por favor permite el acceso a la cámara.";
-            console.error(err);
-        });
+      const URL_MAP = {
+        'ServicioCorrectivo': 'https://docs.google.com/forms/d/e/1FAIpQLSexALVRaCItCODgce3_1U-sfRaMAQq365o57xIJvikpNMc40A/viewform?usp=pp_url&entry.833549862=COEM-',
+        'ServicioInstalaciones': 'https://docs.google.com/forms/d/e/1FAIpQLSczsSDydxhwDe6Up62D0dd3R6DZND5wQ1nvgySBAXkNm0fTNA/viewform?usp=pp_url&entry.1407249899=INST-',
+        'ServicioMantenimiento': 'https://docs.google.com/forms/d/e/1FAIpQLSdAWJ86UbY8cWq76Lzv3AJjfgkQp6JyNe7lClGYa9JePJ4jmw/viewform?usp=pp_url&entry.1296392221=MANT-',
+        'ServicioReporteVisita': 'https://docs.google.com/forms/d/e/1FAIpQLSfj6ZjnKHhc3h-HGGj2q7HcRTuYOcLvQnMws8K3998V5hh_cQ/viewform?usp=pp_url&entry.1483243805=RTDV-',
+        'RegistroQR': 'https://script.google.com/macros/s/AKfycbyluaEUFg_UrHy2MyNqZptclbYCwMSbUzDYezty39Th0t9tdby4vQ3b7CouyLVK4s9tDQ/exec'
+      };
 
-snapBtn.addEventListener('click', async () => {
-    snapBtn.disabled = true;
-    status.innerText = "Procesando imagen...";
-    // ... resto del código
+      document.getElementById('optionSelect').onchange = function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = (this.value === '');
+        btn.style.opacity = (this.value === '') ? "0.5" : "1";
+      };
 
-            snapBtn.disabled = true;
-            status.innerText = "Procesando imagen...";
-            
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            const dataUrl = canvas.toDataURL('image/png');
-            status.innerText = "Enviando a la hoja qaa...";
+      document.getElementById('loginBtn').onclick = async function() {
+        const u = document.getElementById('userInput').value.trim();
+        const p = document.getElementById('passInput').value;
+        const err = document.getElementById('loginError');
+        
+        if(!u || !p) { err.innerHTML = '<span class="error-msg">Por favor ingrese usuario y contraseña.</span>'; return; }
+        
+        err.innerHTML = "";
+        this.disabled = true; this.textContent = "VERIFICANDO...";
+        
+        const res = await apiCall('getEmployeeData', { employeeNumber: u });
 
-            try {
-                // Enviamos los datos a la Web App de Google mediante una petición POST
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Necesario para evitar bloqueos de seguridad básicos
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imagen: dataUrl })
-                });
+        if(res.status === 'success' && p === res.password) {
+          document.getElementById('resName').textContent = res.name;
+          document.getElementById('resPos').textContent = res.position;
+          
+          const folioData = await apiCall('getNextFolio', { userName: res.name });
+          const f = folioData.folio;
+          
+          document.getElementById('folioDisp').textContent = f;
+          document.getElementById('loginSection').style.display = 'none';
+          document.getElementById('mainMenu').style.display = 'block';
+          startScanner(f);
+        } else {
+          err.innerHTML = '<span class="error-msg">Credenciales incorrectas o error de conexión.</span>';
+          this.disabled = false; this.textContent = "INICIAR SESIÓN";
+        }
+      };
 
-                status.innerText = "✅ ¡Foto enviada correctamente!";
-                
-                // Feedback visual de éxito
-                document.body.style.backgroundColor = "#06402b";
-                setTimeout(() => {
-                    document.body.style.backgroundColor = "#121212";
-                    status.innerText = "Listo para otra captura.";
-                    snapBtn.disabled = false;
-                }, 2000);
+      function startScanner(folio) {
+        document.getElementById('reader').style.display = 'block';
+        const scanner = new Html5Qrcode("reader");
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+          async (txt) => {
+            scanner.stop().then(async () => {
+              document.getElementById('reader').style.display = 'none';
+              document.getElementById('resBranch').textContent = "Buscando...";
+              
+              const r = await apiCall('getBranchFromCatalog', { qrContent: txt });
+              document.getElementById('resBranch').textContent = r.status === 'success' ? r.branchName : "No encontrada";
+              
+              if(r.status === 'success') {
+                apiCall('updateFolioBranch', { folio: folio, branchName: r.branchName });
+              }
+            });
+          }
+        );
+      }
 
-            } catch (err) {
-                status.innerText = "❌ Error al enviar: " + err;
-                snapBtn.disabled = false;
-            }
-        });
+      async function openFolios() {
+        document.getElementById('modalFolios').style.display = 'block';
+        document.getElementById('tableContent').innerHTML = "Cargando datos...";
+        
+        const data = await apiCall('getRecentFolios');
+        const foliosArray = data.folios;
+        
+        if(!foliosArray || !foliosArray.length) { 
+          document.getElementById('tableContent').innerHTML = "Sin registros."; 
+          return; 
+        }
+        
+        let h = '<table><tr><th>FOLIO</th><th>FECHA</th><th>USUARIO</th><th>SUCURSAL</th></tr>';
+        foliosArray.forEach(r => { h += `<tr><td>${r.folio}</td><td>${r.fecha}</td><td>${r.usuario}</td><td>${r.sucursal}</td></tr>`; });
+        document.getElementById('tableContent').innerHTML = h + '</table>';
+      }
+
+      document.getElementById('submitBtn').onclick = function() {
+        window.top.location.href = URL_MAP[document.getElementById('optionSelect').value];
+      };
     </script>
-</body>
+  </body>
 </html>
